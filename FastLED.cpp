@@ -105,6 +105,82 @@ void CFastLED::showColor(const struct CRGB & color, uint8_t scale) {
 	countFPS();
 }
 
+// void CFastLED::showController( int controllerNumber ) {
+// 	while(m_nMinMicros && ((micros()-lastshow) < m_nMinMicros));
+// 	lastshow = micros();
+
+
+// 	CLEDController& pCur = this->operator[]( controllerNumber );
+
+// 	// if ( pCur ) {
+// 		// uint8_t d = pCur->getDither();
+// 		// if(m_nFPS < 100) { pCur->setDither(0); }
+// 		// pCur->showLeds( 255 );
+// 		// pCur->setDither(d);
+// 	// }
+
+// 	uint8_t d = pCur.getDither();
+// 	if(m_nFPS < 100) { pCur.setDither(0); }
+// 	pCur.showLeds( 255 );
+// 	pCur.setDither(d);
+
+// 	countFPS();
+// }
+
+// this copy also freezes
+// void CFastLED::showController( int controllerNumber ) {
+// 	// guard against showing too rapidly
+// 	while(m_nMinMicros && ((micros()-lastshow) < m_nMinMicros));
+// 	lastshow = micros();
+
+// 	uint8_t scale = 255;
+
+// 	int x = controllerNumber;
+
+// 	CLEDController *pCur = CLEDController::head();
+// 	while(x-- && pCur) {
+// 		pCur = pCur->next();
+// 	}
+
+// 	if(pCur == NULL) {
+// 		pCur = CLEDController::head();
+// 	}
+
+// 	if(pCur) {
+// 		uint8_t d = pCur->getDither();
+// 		if(m_nFPS < 100) { pCur->setDither(0); }
+// 		pCur->showLeds(scale);
+// 		pCur->setDither(d);
+// 	}
+
+// 	countFPS();
+// }
+
+// This is the same thing as show() 🤷‍♂️
+void CFastLED::showController( int controllerNumber ) {
+	uint8_t scale = 255;
+	// guard against showing too rapidly
+	while(m_nMinMicros && ((micros()-lastshow) < m_nMinMicros));
+	lastshow = micros();
+
+	// If we have a function for computing power, use it!
+	if(m_pPowerFunc) {
+		scale = (*m_pPowerFunc)(scale, m_nPowerData);
+	}
+
+	CLEDController *pCur = CLEDController::head();
+	int curController = 0;
+	while(pCur) {
+		uint8_t d = pCur->getDither();
+		if(m_nFPS < 100) { pCur->setDither(0); }
+		pCur->showLeds(scale);
+		pCur->setDither(d);
+		pCur = pCur->next();
+		curController++;
+	}
+	countFPS();
+}
+
 void CFastLED::clear(bool writeData) {
 	if(writeData) {
 		showColor(CRGB(0,0,0), 0);
