@@ -207,7 +207,7 @@ public:
         // -- Allocate space to save the pixel controller
         //    during parallel output
         mPixels = (PixelController<RGB_ORDER> *) malloc(sizeof(PixelController<RGB_ORDER>));
-        
+
         // -- Precompute rmt items corresponding to a zero bit and a one bit
         //    according to the timing values given in the template instantiation
         // T1H
@@ -251,7 +251,7 @@ protected:
             rmt_tx.tx_config.carrier_en = false;
             rmt_tx.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;
             rmt_tx.tx_config.idle_output_en = true;
-                
+
             // -- Apply the configuration
             rmt_config(&rmt_tx);
 
@@ -270,7 +270,7 @@ protected:
             gTX_sem = xSemaphoreCreateBinary();
             xSemaphoreGive(gTX_sem);
         }
-                
+
         if ( ! FASTLED_RMT_BUILTIN_DRIVER) {
             // -- Allocate the interrupt if we have not done so yet. This
             //    interrupt handler must work for all different kinds of
@@ -434,7 +434,7 @@ protected:
         }
     }
 
-    // -- A controller is done 
+    // -- A controller is done
     //    This function is called when a controller finishes writing
     //    its data. It is called either by the custom interrupt
     //    handler (below), or as a callback from the built-in
@@ -466,7 +466,7 @@ protected:
             }
         }
     }
-    
+
     // -- Custom interrupt handler
     //    This interrupt handler handles two cases: a controller is
     //    done writing its data, or a controller needs to fill the
@@ -487,7 +487,7 @@ protected:
                 // -- More to send on this channel
                 if (intr_st & BIT(tx_next_bit)) {
                     RMT.int_clr.val |= BIT(tx_next_bit);
-                    
+
                     // -- Refill the half of the buffer that we just finished,
                     //    allowing the other half to proceed.
                     ClocklessController * controller = static_cast<ClocklessController*>(gOnChannel[channel]);
@@ -508,7 +508,10 @@ protected:
     void IRAM_ATTR fillNext()
     {
         if (mPixels->has(1)) {
+            #pragma GCC diagnostic ignored "-Wunused-variable"
+            #pragma GCC diagnostic push
             uint32_t t1 = __clock_cycles(); // NOLINT
+            #pragma GCC diagnostic pop
 
             uint32_t one_val = mOne.val;
             uint32_t zero_val = mZero.val;
@@ -526,8 +529,8 @@ protected:
             // -- Use locals for speed
             volatile register uint32_t * pItem =  mRMT_mem_ptr;
             register uint16_t curPulse = mCurPulse;
-            
-            // Shift bits out, MSB first, setting RMTMEM.chan[n].data32[x] to the 
+
+            // Shift bits out, MSB first, setting RMTMEM.chan[n].data32[x] to the
             // rmt_item32_t value corresponding to the buffered bit value
             for (register uint32_t j = 0; j < 24; j++) {
                 uint32_t val = (pixel & 0x80000000L) ? one_val : zero_val;
@@ -551,7 +554,7 @@ protected:
             for (uint32_t j = 0; j < 8; j++) {
                 * mRMT_mem_ptr++ = 0;
             }
-        }   
+        }
     }
 
     // NO LONGER USED
@@ -561,13 +564,13 @@ protected:
 
         // -- Cycle through the color channels
         switch (mCurColor) {
-        case 0: 
+        case 0:
             byte = mPixels->loadAndScale0();
             break;
-        case 1: 
+        case 1:
             byte = mPixels->loadAndScale1();
             break;
-        case 2: 
+        case 2:
             byte = mPixels->loadAndScale2();
             mPixels->advanceData();
             mPixels->stepDithering();
@@ -603,13 +606,13 @@ protected:
             // -- Get one byte
             // -- Cycle through the color channels
             switch (mCurColor) {
-            case 0: 
+            case 0:
                 byteval = mPixels->loadAndScale0();
                 break;
-            case 1: 
+            case 1:
                 byteval = mPixels->loadAndScale1();
                 break;
-            case 2: 
+            case 2:
                 byteval = mPixels->loadAndScale2();
                 mPixels->advanceData();
                 mPixels->stepDithering();
@@ -621,10 +624,10 @@ protected:
 
             mCurColor++;
             if (mCurColor == NUM_COLOR_CHANNELS) mCurColor = 0;
-        
+
             // byteval = getNextByte();
             byteval <<= 24;
-            // Shift bits out, MSB first, setting RMTMEM.chan[n].data32[x] to the 
+            // Shift bits out, MSB first, setting RMTMEM.chan[n].data32[x] to the
             // rmt_item32_t value corresponding to the buffered bit value
             for (register uint32_t j = 0; j < 8; j++) {
                 uint32_t val = (byteval & 0x80000000L) ? one_val : zero_val;
@@ -646,7 +649,7 @@ protected:
                 pulses++;
             }
         }
-        
+
         // -- When we have filled the back half the buffer, reset the position to the first half
         if (mCurPulse == MAX_PULSES) {
             mRMT_mem_ptr = & (RMTMEM.chan[mRMT_channel].data32[0].val);
